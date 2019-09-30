@@ -1,0 +1,541 @@
+---
+title: "Network Meta-Analysis"
+output: html_notebook
+---
+
+Principal Investigator: Aakash Garg  
+Statistician: Davit Sargsyan  
+Date: `r date()`  
+  
+```{r setup}
+require(netmeta)
+require(data.table)
+require(DT)
+```
+
+# Load data
+```{r data}
+dt1 <- fread("Short DAPT Excel Sheet New.csv")
+datatable(dt1)
+```
+
+Next, we separated each outcome, computed log odds ratios and their standard errors, and performed network meta-analysis.  
+  
+# All-Cause Mortality (ACM)
+```{r acm}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "ACM")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                         (1/N.x) +
+                         (1/Events.y) + 
+                         (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+netgraph(m1,
+         cex.number.of.studies = TRUE)
+
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# CV Death
+```{r cv_death}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "CV Death")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# MI
+```{r mi}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "MI")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# Stroke
+```{r stroke}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "Stroke")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# ST
+```{r st}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "ST")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# Major Bleeding
+```{r major_bleed}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "Major Bleeding")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                         (1/N.x) +
+                         (1/Events.y) + 
+                         (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# Major or Minor Bleeding
+```{r major_and_minor_bleed}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "Major or Minor Bleeding")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# CV Death or MI 
+```{r cv_death_and_mi}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "CV Death or MI")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# Composite of Ischemic Events 
+```{r composite_ischemic}
+tmp <- dt1[, c("Study",
+               "Arm",
+               "N",
+               "Composite of Ischemic Events")]
+names(tmp)[4] <- "Events"
+tmp <- tmp[!is.na(Events),]
+tmp$Arm <- factor(tmp$Arm,
+                  levels = c("DAPT",
+                             "ASA only",
+                             "P2Y12 only"))
+
+tmp1 <- tmp[Arm != "DAPT",]
+
+tmp2 <-tmp[Arm == "DAPT",
+           c("Study",
+             "N",
+             "Events")] 
+
+tmp3 <- merge(tmp1,
+              tmp2,
+              by = "Study")
+
+tmp3[, logOR := log((Events.x/N.x)/(Events.y/N.y))]
+tmp3[, seLogOR := sqrt((1/Events.x) + 
+                      (1/N.x) +
+                      (1/Events.y) + 
+                      (1/N.y))]
+tmp3$Compare <- "DAPT"
+datatable(tmp3)
+
+m1 <- netmeta(TE = logOR,
+              seTE = seLogOR,
+              treat1 = Arm,
+              treat2 = Compare,
+              studlab = Study,
+              reference.group = "DAPT",
+              comb.random = TRUE,
+              all.treatments = TRUE,
+              sm = "OR",
+              data = tmp3)
+print(m1,
+      reference.group = "DAPT")
+print(m1,
+      reference.group = "ASA only")
+
+forest(m1, 
+       reference.group = "DAPT",
+       col.square = "blue",
+       sortvar = c("P2Y12 only",
+                   "ASA only",
+                   "DAPT"),
+       smlab = "")
+```
+
+# References
+1. [Doing Meta-Analysis in R Meta-Analysis, A Hands-On Guide](https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/frequentist-network-meta-analysis.html), Chapter 11.1 Frequentist Network, M. Harrer et al.  
+2. [An Introduction to Categorical data Analysis](https://mregresion.files.wordpress.com/2012/08/agresti-introduction-to-categorical-data.pdf), Alan Agresti, 2007, Page 30.  
+3. [Safety and Efficacy of Antithrombotic Strategies in Patients With Atrial Fibrillation Undergoing Percutaneous Coronary Intervention
+A Network Meta-analysis of Randomized Controlled Trials](https://jamanetwork.com/journals/jamacardiology/article-abstract/2735647), R. D. Lopes et al, Jama Cardiology, June 19 2019  
+4. [Mortality in patients treated with extended duration dual antiplatelet therapy after drug-eluting stent implantation: a pairwise and Bayesian network meta-analysis of randomised trials](https://www.sciencedirect.com/science/article/pii/S014067361560263X?via%3Dihub), T. Palmerini, The Lancet, June 13 2015  
+  
+# Session Information
+```{r session}
+sessionInfo()
+```
