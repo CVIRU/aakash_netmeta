@@ -1,0 +1,434 @@
+---
+title: "Network Meta-Analysis, Version 2"
+output:
+  html_notebook:
+    number_sections: yes
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+---
+
+Principal Investigator: Aakash Garg  
+Statistician: Davit Sargsyan  
+Date: `r date()`  
+  
+```{r setup}
+require(netmeta)
+require(data.table)
+require(DT)
+```
+
+```{r functions}
+foo3 <- function(ep, netplot = FALSE) {
+  tmp <- dt1[, c("Study",
+                 "Arm",
+                 "N",
+                 ep),
+             with = FALSE]
+  names(tmp)[4] <- "Events"
+  tmp <- tmp[!is.na(Events),]
+  tmp$Arm <- factor(tmp$Arm,
+                    levels = c("DAPT",
+                               "ASA only",
+                               "P2Y12 only"))
+  tmp1 <- tmp[Arm != "DAPT",]
+  
+  tmp2 <- tmp[Arm == "DAPT",
+              c("Study",
+                "N",
+                "Events")] 
+  
+  tmp3 <- merge(tmp1,
+                tmp2,
+                by = "Study")
+  
+  tmp3[, OR := (Events.x/N.x)/(Events.y/N.y)]
+  tmp3[, logOR := log(OR)]
+  tmp3[, seLogOR := sqrt((1/Events.x) + 
+                           (1/N.x) +
+                           (1/Events.y) + 
+                           (1/N.y))]
+  tmp3$Compare <- "DAPT"
+  tmp3 <- tmp3[, c(1:2, 10, 3:9)]
+  print(datatable(tmp3,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(dt1))) %>%
+          formatCurrency(columns = 4:7, 
+                         currency = "",
+                         digits = 0,
+                         mark = ",") %>%
+          formatCurrency(columns = 8:10, 
+                         currency = "",
+                         digits = 3,
+                         mark = ","))
+  
+  # Exclude infinities
+  tmp3 <- tmp3[is.finite(logOR), ]
+  
+  m1 <- netmeta(TE = logOR,
+                seTE = seLogOR,
+                n1 = N.x,
+                n2 = N.y,
+                event1 = Events.x,
+                event2 = Events.y,
+                treat1 = Arm,
+                treat2 = Compare,
+                studlab = Study,
+                reference.group = "DAPT",
+                seq = levels(tmp3$Arm),
+                comb.random = TRUE,
+                comb.fixed = FALSE,
+                all.treatments = TRUE,
+                sm = "OR",
+                data = tmp3)
+  
+  if(netplot == TRUE){
+    netgraph(m1,
+             cex.number.of.studies = TRUE)
+  }
+  
+  print(m1,
+        reference.group = "DAPT")
+  print(m1,
+        reference.group = "ASA only")
+  
+  forest(m1, 
+         reference.group = "DAPT",
+         col.square = "blue",
+         sortvar = c("P2Y12 only",
+                     "ASA only",
+                     "DAPT"),
+         smlab = "")
+  
+  t1 <- melt(m1$TE.random)
+  names(t1) <- c("Treatment1",
+                 "Treatment2",
+                 "OR")
+  t1$LB <- melt(m1$lower.random)$value
+  t1$UB <- melt(m1$upper.random)$value
+  t1$pval <- melt(m1$pval.random)$value
+  t1 <- data.table(Endpoint = ep,
+                   t1)
+  t1 <- t1[t1$OR != 0, ]
+  t1$OR <- exp(t1$OR)
+  t1$LB <- exp(t1$LB)
+  t1$UB <- exp(t1$UB)
+  
+  print(datatable(t1,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(t1))) %>%
+          formatCurrency(columns = 4:7, 
+                         currency = "",
+                         digits = 3))
+  
+  t2 <- data.table(Endpoint = ep,
+                   Study = m1$studlab,
+                   Treatment1 = m1$treat1,
+                   Treatment2 = m1$treat2,
+                   OR = exp(m1$TE.nma.random),
+                   LB = exp(m1$lower.nma.random),
+                   UB = exp(m1$upper.nma.random),
+                   pVal = exp(m1$pval.nma.random))
+  print(datatable(t2,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(t2))) %>%
+          formatCurrency(columns = 5:8, 
+                         currency = "",
+                         digits = 3))
+}
+
+foo4 <- function(ep, netplot = FALSE) {
+  tmp <- dt1[, c("Study",
+                 "Arm2",
+                 "N",
+                 ep),
+             with = FALSE]
+  names(tmp)[4] <- "Events"
+  tmp <- tmp[!is.na(Events),]
+  tmp$Arm2 <- factor(tmp$Arm2,
+                     levels = c("DAPT",
+                                "ASA only",
+                                "ASA only 6m",
+                                "P2Y12 only"))
+  
+  tmp1 <- tmp[Arm2 != "DAPT",]
+  
+  tmp2 <- tmp[Arm2 == "DAPT",
+              c("Study",
+                "N",
+                "Events")] 
+  
+  tmp3 <- merge(tmp1,
+                tmp2,
+                by = "Study")
+  
+  tmp3[, OR := (Events.x/N.x)/(Events.y/N.y)]
+  tmp3[, logOR := log(OR)]
+  tmp3[, seLogOR := sqrt((1/Events.x) + 
+                           (1/N.x) +
+                           (1/Events.y) + 
+                           (1/N.y))]
+  tmp3$Compare <- "DAPT"
+  tmp3 <- tmp3[, c(1:2, 10, 3:9)]
+  print(datatable(tmp3,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(dt1))) %>%
+          formatCurrency(columns = 4:7, 
+                         currency = "",
+                         digits = 0,
+                         mark = ",") %>%
+          formatCurrency(columns = 8:10, 
+                         currency = "",
+                         digits = 3,
+                         mark = ","))
+  
+  # Exclude infinities
+  tmp3 <- tmp3[is.finite(logOR), ]
+  
+  m1 <- netmeta(TE = logOR,
+                seTE = seLogOR,
+                n1 = N.x,
+                n2 = N.y,
+                event1 = Events.x,
+                event2 = Events.y,
+                treat1 = Arm2,
+                treat2 = Compare,
+                studlab = Study,
+                reference.group = "DAPT",
+                seq = levels(tmp3$Arm2),
+                comb.random = TRUE,
+                comb.fixed = FALSE,
+                all.treatments = TRUE,
+                sm = "OR",
+                data = tmp3)
+  
+  if(netplot == TRUE){
+    netgraph(m1,
+             cex.number.of.studies = TRUE)
+  }
+  
+  print(m1,
+        reference.group = "DAPT")
+  print(m1,
+        reference.group = "ASA only")
+  
+  forest(m1, 
+         reference.group = "DAPT",
+         col.square = "blue",
+         sortvar = c("P2Y12 only",
+                     "ASA only",
+                     "DAPT"),
+         smlab = "")
+  
+  t1 <- melt(m1$TE.random)
+  names(t1) <- c("Treatment1",
+                 "Treatment2",
+                 "OR")
+  t1$LB <- melt(m1$lower.random)$value
+  t1$UB <- melt(m1$upper.random)$value
+  t1$pval <- melt(m1$pval.random)$value
+  t1 <- data.table(Endpoint = ep,
+                   t1)
+  t1 <- t1[t1$OR != 0, ]
+  t1$OR <- exp(t1$OR)
+  t1$LB <- exp(t1$LB)
+  t1$UB <- exp(t1$UB)
+  
+  print(datatable(t1,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(t1))) %>%
+          formatCurrency(columns = 4:7, 
+                         currency = "",
+                         digits = 3))
+  
+  t2 <- data.table(Endpoint = ep,
+                   Study = m1$studlab,
+                   Treatment1 = m1$treat1,
+                   Treatment2 = m1$treat2,
+                   OR = exp(m1$TE.nma.random),
+                   LB = exp(m1$lower.nma.random),
+                   UB = exp(m1$upper.nma.random),
+                   pVal = exp(m1$pval.nma.random))
+  print(datatable(t2,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(t2))) %>%
+          formatCurrency(columns = 5:8, 
+                         currency = "",
+                         digits = 3))
+}
+```
+
+
+# Load data
+```{r data}
+dt1 <- fread("data/Short DAPT Excel Sheet 09302019.csv")
+
+# Remove PCI Cure
+dt1 <- dt1[Study != "PCI Cure", ]
+
+datatable(dt1,
+          caption = "Table 1: number of patients",
+          rownames = FALSE,
+          class = "cell-border stripe",
+          options = list(searching = TRUE,
+                         pageLength = nrow(dt1))) %>%
+    formatCurrency(columns = 3:ncol(dt1), 
+                 currency = "",
+                 digits = 0,
+                 mark = ",")
+```
+
+Next, we separated each outcome, computed log odds ratios and their standard errors, and performed network meta-analysis.  
+  
+# All-Cause Mortality (ACM)
+## 3 Groups
+```{r acm_3}
+foo3("ACM", netplot = TRUE)
+```
+
+## 4 Groups
+```{r acm_4}
+foo4("ACM", netplot = TRUE)
+```
+
+# CV Death
+## 3 Groups
+```{r cvdeath_3}
+foo3("CV Death")
+```
+
+## 4 Groups
+```{r cvdeath_4}
+foo4("CV Death")
+```
+
+# MI
+## 3 Groups
+```{r mi_3}
+foo3("MI")
+```
+
+## 4 Groups
+```{r mi_4}
+foo4("MI")
+```
+
+# Stroke
+## 3 Groups
+```{r stroke_3}
+foo3("Stroke")
+```
+
+## 4 Groups
+```{r stroke_4}
+foo4("Stroke")
+```
+
+# ST
+## 3 Groups
+```{r st_3}
+foo3("ST")
+```
+
+## 4 Groups
+```{r st_4}
+foo4("ST")
+```
+
+# Maojor Bleeding
+## 3 Groups
+```{r mb_3}
+foo3("Maojor Bleeding")
+```
+
+## 4 Groups
+```{r mb_4}
+foo4("Maojor Bleeding")
+```
+
+# Major or Minor Bleeding
+## 3 Groups
+```{r mmb_3}
+foo3("Major or Minor Bleeding")
+```
+
+## 4 Groups
+```{r mmb_4}
+foo4("Major or Minor Bleeding")
+```
+
+# CV Death or MI  
+## 3 Groups
+```{r cvdmi_3}
+foo3("CV Death or MI")
+```
+
+## 4 Groups
+```{r cvdmi_4}
+foo4("CV Death or MI")
+```
+
+# Primary end point
+## 3 Groups
+```{r pep_3}
+foo3("Primary end point")
+```
+
+## 4 Groups
+```{r pep_4}
+foo4("Primary end point")
+```
+
+# Composite of end point 
+## 3 Groups
+```{r cep_3}
+foo3("Composite of end point")
+```
+
+## 4 Groups
+```{r cep_4}
+foo4("Composite of end point")
+```
+
+# References
+1. [Doing Meta-Analysis in R Meta-Analysis, A Hands-On Guide](https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/frequentist-network-meta-analysis.html), Chapter 11.1 Frequentist Network, M. Harrer et al.  
+2. [An Introduction to Categorical data Analysis](https://mregresion.files.wordpress.com/2012/08/agresti-introduction-to-categorical-data.pdf), Alan Agresti, 2007, Page 30.  
+3. [Safety and Efficacy of Antithrombotic Strategies in Patients With Atrial Fibrillation Undergoing Percutaneous Coronary Intervention
+A Network Meta-analysis of Randomized Controlled Trials](https://jamanetwork.com/journals/jamacardiology/article-abstract/2735647), R. D. Lopes et al, Jama Cardiology, June 19 2019  
+4. [Mortality in patients treated with extended duration dual antiplatelet therapy after drug-eluting stent implantation: a pairwise and Bayesian network meta-analysis of randomised trials](https://www.sciencedirect.com/science/article/pii/S014067361560263X?via%3Dihub), T. Palmerini, The Lancet, June 13 2015  
+
+# Abbreviations
+```{r abbrev}
+abbrev <- data.table(rbind(c("ASA", "Acetylsalicylic acid (aspirin)."),
+                           c("DAPT", "Dual antiplatelet therapy (ASA and P2Y12)."),
+                           c("P2Y12", "Chemoreceptor for adenosine diphosphate. The drugs clopidogrel (Plavix), prasugrel (Efient, Effient), ticagrelor (Brilinta), and cangrelor (Kengreal) bind to this receptor and are marketed as antiplatelet agents.")))
+colnames(abbrev) <- c("Abbreviation",
+                      "Description")
+setorder(abbrev,
+         Abbreviation)
+datatable(abbrev)
+```
+
+  
+# Session Information
+```{r session}
+sessionInfo()
+```

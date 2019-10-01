@@ -1,6 +1,11 @@
 ---
 title: "Network Meta-Analysis"
-output: html_notebook
+output:
+  html_notebook:
+    number_sections: yes
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
 ---
 
 Principal Investigator: Aakash Garg  
@@ -15,8 +20,17 @@ require(DT)
 
 # Load data
 ```{r data}
-dt1 <- fread("Short DAPT Excel Sheet New.csv")
-datatable(dt1)
+dt1 <- fread("data/Short DAPT Excel Sheet New.csv")
+datatable(dt1,
+          caption = "Table 1: number of patients",
+          rownames = FALSE,
+          class = "cell-border stripe",
+          options = list(searching = TRUE,
+                         pageLength = nrow(dt1))) %>%
+    formatCurrency(columns = 3:ncol(dt1), 
+                 currency = "",
+                 digits = 0,
+                 mark = ",")
 ```
 
 Next, we separated each outcome, computed log odds ratios and their standard errors, and performed network meta-analysis.  
@@ -51,7 +65,20 @@ tmp3[, seLogOR := sqrt((1/Events.x) +
                          (1/Events.y) + 
                          (1/N.y))]
 tmp3$Compare <- "DAPT"
-datatable(tmp3)
+datatable(tmp3,
+          caption = "Table 2: ",
+          rownames = FALSE,
+          class = "cell-border stripe",
+          options = list(searching = TRUE,
+                         pageLength = nrow(dt1))) %>%
+    formatCurrency(columns = 3:6, 
+                 currency = "",
+                 digits = 0,
+                 mark = ",") %>%
+    formatCurrency(columns = 7:8, 
+                 currency = "",
+                 digits = 3,
+                 mark = ",")
 
 m1 <- netmeta(TE = logOR,
               seTE = seLogOR,
@@ -534,6 +561,20 @@ forest(m1,
 3. [Safety and Efficacy of Antithrombotic Strategies in Patients With Atrial Fibrillation Undergoing Percutaneous Coronary Intervention
 A Network Meta-analysis of Randomized Controlled Trials](https://jamanetwork.com/journals/jamacardiology/article-abstract/2735647), R. D. Lopes et al, Jama Cardiology, June 19 2019  
 4. [Mortality in patients treated with extended duration dual antiplatelet therapy after drug-eluting stent implantation: a pairwise and Bayesian network meta-analysis of randomised trials](https://www.sciencedirect.com/science/article/pii/S014067361560263X?via%3Dihub), T. Palmerini, The Lancet, June 13 2015  
+
+# Abbreviations
+```{r abbrev}
+abbrev <- data.table(rbind(c("ASA", "Acetylsalicylic acid (aspirin)."),
+                           c("DAPT", "Dual antiplatelet therapy (ASA and P2Y12)."),
+                           c("P2Y12", "Chemoreceptor for adenosine diphosphate. The drugs clopidogrel (Plavix), prasugrel (Efient, Effient), ticagrelor (Brilinta), and cangrelor (Kengreal) bind to this receptor and are marketed as antiplatelet agents.")))
+colnames(abbrev) <- c("Abbreviation",
+                      "Description")
+setorder(abbrev,
+         Abbreviation)
+datatable(abbrev,
+          rownames = FALSE)
+```
+
   
 # Session Information
 ```{r session}
