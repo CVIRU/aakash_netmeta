@@ -16,10 +16,11 @@ Date: `r date()`
 require(netmeta)
 require(data.table)
 require(DT)
+ require(ggplot2)
 ```
 
 ```{r functions}
-foo3 <- function(ep, netplot = FALSE) {
+foo3 <- function(ep, netplot = TRUE) {
   tmp <- dt1[, c("Study",
                  "Arm",
                  "N",
@@ -144,9 +145,66 @@ foo3 <- function(ep, netplot = FALSE) {
           formatCurrency(columns = 5:8, 
                          currency = "",
                          digits = 3))
+  
+  t3 <- data.table(Endpoint = ep,
+                   Study = tmp3$Study,
+                   Treatment1 = tmp3$Arm,
+                   Treatment2 = tmp3$Compare,
+                   N = tmp3$N.x + tmp3$N.y,
+                   OR = tmp3$OR,
+                   LB = exp(tmp3$logOR - 1.96*tmp3$seLogOR),
+                   UB = exp(tmp3$logOR + 1.96*tmp3$seLogOR))
+  
+  tmp <- t1[(Treatment1 %in% c("ASA only",
+                               "P2Y12 only") & 
+               Treatment2 == "DAPT"), ]
+  t3 <- rbindlist(list(t3,
+                       data.table(Endpoint = ep,
+                                  Study = rep("Average", nrow(tmp)),
+                                  Treatment1 = tmp$Treatment1,
+                                  Treatment2 = tmp$Treatment2,
+                                  N = NA,
+                                  OR = tmp$OR,
+                                  LB = tmp$LB,
+                                  UB = tmp$UB)))
+  setorder(t3,
+           Treatment1)
+  print(datatable(t3,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(t3))) %>%
+          formatCurrency(columns = 6:8, 
+                         currency = "",
+                         digits = 3))
+  
+  t3$Comparison <- paste(t3$Treatment1,
+                         "vs.",
+                         t3$Treatment2)
+  
+  p1 <- ggplot(t3,
+               aes(x = Study,
+                   y = OR,
+                   ymin = LB,
+                   ymax = UB,
+                   fill = Comparison)) +
+    facet_wrap(~ Comparison) +
+    coord_flip() +
+    geom_errorbar(width = 0.3) +
+    geom_hline(yintercept = 1,
+               linetype = 2) +
+    geom_point(size = 3,
+               shape = 23) +
+    theme(legend.position = "none")
+  
+  print(p1)
 }
 
-foo4 <- function(ep, netplot = FALSE) {
+ep = "Stroke"
+netplot = TRUE
+
+foo4 <- function(ep, netplot = TRUE) {
   tmp <- dt1[, c("Study",
                  "Arm2",
                  "N",
@@ -229,6 +287,7 @@ foo4 <- function(ep, netplot = FALSE) {
          col.square = "blue",
          sortvar = c("P2Y12 only",
                      "ASA only",
+                     "ASA only 6m",
                      "DAPT"),
          smlab = "")
   
@@ -273,6 +332,61 @@ foo4 <- function(ep, netplot = FALSE) {
           formatCurrency(columns = 5:8, 
                          currency = "",
                          digits = 3))
+  
+  t3 <- data.table(Endpoint = ep,
+                   Study = tmp3$Study,
+                   Treatment1 = tmp3$Arm2,
+                   Treatment2 = tmp3$Compare,
+                   N = tmp3$N.x + tmp3$N.y,
+                   OR = tmp3$OR,
+                   LB = exp(tmp3$logOR - 1.96*tmp3$seLogOR),
+                   UB = exp(tmp3$logOR + 1.96*tmp3$seLogOR))
+  
+  tmp <- t1[(Treatment1 %in% c("ASA only 6m",
+                               "ASA only",
+                               "P2Y12 only") & 
+               Treatment2 == "DAPT"), ]
+  t3 <- rbindlist(list(t3,
+                       data.table(Endpoint = ep,
+                                  Study = rep("Average", nrow(tmp)),
+                                  Treatment1 = tmp$Treatment1,
+                                  Treatment2 = tmp$Treatment2,
+                                  N = NA,
+                                  OR = tmp$OR,
+                                  LB = tmp$LB,
+                                  UB = tmp$UB)))
+  setorder(t3,
+           Treatment1)
+  print(datatable(t3,
+                  caption = "",
+                  rownames = FALSE,
+                  class = "cell-border stripe",
+                  options = list(searching = TRUE,
+                                 pageLength = nrow(t3))) %>%
+          formatCurrency(columns = 6:8, 
+                         currency = "",
+                         digits = 3))
+  
+  t3$Comparison <- paste(t3$Treatment1,
+                         "vs.",
+                         t3$Treatment2)
+  
+  p1 <- ggplot(t3,
+               aes(x = Study,
+                   y = OR,
+                   ymin = LB,
+                   ymax = UB,
+                   fill = Comparison)) +
+    facet_wrap(~ Comparison) +
+    coord_flip() +
+    geom_errorbar(width = 0.3) +
+    geom_hline(yintercept = 1,
+               linetype = 2) +
+    geom_point(size = 3,
+               shape = 23) +
+    theme(legend.position = "none")
+  
+  print(p1)
 }
 ```
 
@@ -301,12 +415,12 @@ Next, we separated each outcome, computed log odds ratios and their standard err
 # All-Cause Mortality (ACM)
 ## 3 Groups
 ```{r acm_3}
-foo3("ACM", netplot = TRUE)
+foo3("ACM")
 ```
 
 ## 4 Groups
 ```{r acm_4}
-foo4("ACM", netplot = TRUE)
+foo4("ACM")
 ```
 
 # CV Death
