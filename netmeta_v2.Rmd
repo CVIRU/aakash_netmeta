@@ -16,11 +16,11 @@ Date: `r date()`
 require(netmeta)
 require(data.table)
 require(DT)
- require(ggplot2)
+require(ggplot2)
 ```
 
-```{r functions}
-foo3 <- function(ep, netplot = TRUE) {
+```{r function_3groups}
+foo3 <- function(ep) {
   tmp <- dt1[, c("Study",
                  "Arm",
                  "N",
@@ -32,6 +32,7 @@ foo3 <- function(ep, netplot = TRUE) {
                     levels = c("DAPT",
                                "ASA only",
                                "P2Y12 only"))
+  
   tmp1 <- tmp[Arm != "DAPT",]
   
   tmp2 <- tmp[Arm == "DAPT",
@@ -43,15 +44,22 @@ foo3 <- function(ep, netplot = TRUE) {
                 tmp2,
                 by = "Study")
   
-  tmp3[, OR := (Events.x/N.x)/(Events.y/N.y)]
-  tmp3[, logOR := log(OR)]
-  tmp3[, seLogOR := sqrt((1/Events.x) + 
-                           (1/N.x) +
-                           (1/Events.y) + 
-                           (1/N.y))]
-  tmp3$Compare <- "DAPT"
-  tmp3 <- tmp3[, c(1:2, 10, 3:9)]
-  print(datatable(tmp3,
+  # Add half to all counts to avoid Infs
+  tmp3.1 <- copy(tmp3)
+  tmp3.1$N.x <- tmp3.1$N.x + 0.5
+  tmp3.1$Events.x <- tmp3.1$Events.x + 0.5
+  tmp3.1$N.y <- tmp3.1$N.y + 0.5
+  tmp3.1$Events.y <- tmp3.1$Events.y + 0.5
+  
+  tmp3.1[, OR := (Events.x/N.x)/(Events.y/N.y)]
+  tmp3.1[, logOR := log(OR)]
+  tmp3.1[, seLogOR := sqrt((1/Events.x) + 
+                             (1/N.x) +
+                             (1/Events.y) + 
+                             (1/N.y))]
+  tmp3.1$Compare <- "DAPT"
+  tmp3.1 <- tmp3.1[, c(1:2, 10, 3:9)]
+  print(datatable(tmp3.1,
                   caption = "",
                   rownames = FALSE,
                   class = "cell-border stripe",
@@ -66,8 +74,8 @@ foo3 <- function(ep, netplot = TRUE) {
                          digits = 3,
                          mark = ","))
   
-  # Exclude infinities
-  tmp3 <- tmp3[is.finite(logOR), ]
+  # # Exclude infinities
+  # tmp3 <- tmp3[is.finite(logOR), ]
   
   m1 <- netmeta(TE = logOR,
                 seTE = seLogOR,
@@ -79,22 +87,22 @@ foo3 <- function(ep, netplot = TRUE) {
                 treat2 = Compare,
                 studlab = Study,
                 reference.group = "DAPT",
-                seq = levels(tmp3$Arm),
+                seq = c("ASA only",
+                        "P2Y12 only",
+                        "DAPT"),
                 comb.random = TRUE,
                 comb.fixed = FALSE,
                 all.treatments = TRUE,
                 sm = "OR",
-                data = tmp3)
+                data = tmp3.1)
   
-  if(netplot == TRUE){
-    netgraph(m1,
-             cex.number.of.studies = TRUE)
-  }
+  netgraph(m1,
+           cex.number.of.studies = TRUE)
   
-  print(m1,
-        reference.group = "DAPT")
-  print(m1,
-        reference.group = "ASA only")
+  # print(m1,
+  #       reference.group = "DAPT")
+  # print(m1,
+  #       reference.group = "ASA only")
   
   forest(m1, 
          reference.group = "DAPT",
@@ -135,7 +143,20 @@ foo3 <- function(ep, netplot = TRUE) {
                    OR = exp(m1$TE.nma.random),
                    LB = exp(m1$lower.nma.random),
                    UB = exp(m1$upper.nma.random),
-                   pVal = exp(m1$pval.nma.random))
+                   pVal = m1$pval.nma.random)
+  t2.1 <- data.table(Endpoint = ep,
+                     Study = t2$Study,
+                     Treatment1 = t2$Treatment2,
+                     Treatment2 = t2$Treatment1,
+                     OR = 1/t2$OR,
+                     LB = 1/t2$UB,
+                     UB = 1/t2$LB,
+                     pVal = t2$pVal)
+  t2 <- rbindlist(list(t2,
+                       t2.1))
+  setorder(t2,
+           Treatment2)
+  
   print(datatable(t2,
                   caption = "",
                   rownames = FALSE,
@@ -147,13 +168,13 @@ foo3 <- function(ep, netplot = TRUE) {
                          digits = 3))
   
   t3 <- data.table(Endpoint = ep,
-                   Study = tmp3$Study,
-                   Treatment1 = tmp3$Arm,
-                   Treatment2 = tmp3$Compare,
-                   N = tmp3$N.x + tmp3$N.y,
-                   OR = tmp3$OR,
-                   LB = exp(tmp3$logOR - 1.96*tmp3$seLogOR),
-                   UB = exp(tmp3$logOR + 1.96*tmp3$seLogOR))
+                   Study = tmp3.1$Study,
+                   Treatment1 = tmp3.1$Arm,
+                   Treatment2 = tmp3.1$Compare,
+                   N = tmp3$N.x + tmp3$N.y, # NOTE: this are numbers before adding 0.5
+                   OR = tmp3.1$OR,
+                   LB = exp(tmp3.1$logOR - 1.96*tmp3.1$seLogOR),
+                   UB = exp(tmp3.1$logOR + 1.96*tmp3.1$seLogOR))
   
   tmp <- t1[(Treatment1 %in% c("ASA only",
                                "P2Y12 only") & 
@@ -200,11 +221,10 @@ foo3 <- function(ep, netplot = TRUE) {
   
   print(p1)
 }
+```
 
-ep = "Stroke"
-netplot = TRUE
-
-foo4 <- function(ep, netplot = TRUE) {
+```{r function_4groups}
+foo4 <- function(ep) {
   tmp <- dt1[, c("Study",
                  "Arm2",
                  "N",
@@ -229,15 +249,22 @@ foo4 <- function(ep, netplot = TRUE) {
                 tmp2,
                 by = "Study")
   
-  tmp3[, OR := (Events.x/N.x)/(Events.y/N.y)]
-  tmp3[, logOR := log(OR)]
-  tmp3[, seLogOR := sqrt((1/Events.x) + 
-                           (1/N.x) +
-                           (1/Events.y) + 
-                           (1/N.y))]
-  tmp3$Compare <- "DAPT"
-  tmp3 <- tmp3[, c(1:2, 10, 3:9)]
-  print(datatable(tmp3,
+  # Add half to all counts to avoid Infs
+  tmp3.1 <- copy(tmp3)
+  tmp3.1$N.x <- tmp3.1$N.x + 0.5
+  tmp3.1$Events.x <- tmp3.1$Events.x + 0.5
+  tmp3.1$N.y <- tmp3.1$N.y + 0.5
+  tmp3.1$Events.y <- tmp3.1$Events.y + 0.5
+  
+  tmp3.1[, OR := (Events.x/N.x)/(Events.y/N.y)]
+  tmp3.1[, logOR := log(OR)]
+  tmp3.1[, seLogOR := sqrt((1/Events.x) + 
+                             (1/N.x) +
+                             (1/Events.y) + 
+                             (1/N.y))]
+  tmp3.1$Compare <- "DAPT"
+  tmp3.1 <- tmp3.1[, c(1:2, 10, 3:9)]
+  print(datatable(tmp3.1,
                   caption = "",
                   rownames = FALSE,
                   class = "cell-border stripe",
@@ -252,8 +279,8 @@ foo4 <- function(ep, netplot = TRUE) {
                          digits = 3,
                          mark = ","))
   
-  # Exclude infinities
-  tmp3 <- tmp3[is.finite(logOR), ]
+  # # Exclude infinities
+  # tmp3 <- tmp3[is.finite(logOR), ]
   
   m1 <- netmeta(TE = logOR,
                 seTE = seLogOR,
@@ -265,22 +292,23 @@ foo4 <- function(ep, netplot = TRUE) {
                 treat2 = Compare,
                 studlab = Study,
                 reference.group = "DAPT",
-                seq = levels(tmp3$Arm2),
+                seq = c("ASA only",
+                        "ASA only 6m",
+                        "P2Y12 only",
+                        "DAPT"),
                 comb.random = TRUE,
                 comb.fixed = FALSE,
                 all.treatments = TRUE,
                 sm = "OR",
-                data = tmp3)
+                data = tmp3.1)
   
-  if(netplot == TRUE){
-    netgraph(m1,
-             cex.number.of.studies = TRUE)
-  }
+  netgraph(m1,
+           cex.number.of.studies = TRUE)
   
-  print(m1,
-        reference.group = "DAPT")
-  print(m1,
-        reference.group = "ASA only")
+  # print(m1,
+  #       reference.group = "DAPT")
+  # print(m1,
+  #       reference.group = "ASA only")
   
   forest(m1, 
          reference.group = "DAPT",
@@ -322,7 +350,20 @@ foo4 <- function(ep, netplot = TRUE) {
                    OR = exp(m1$TE.nma.random),
                    LB = exp(m1$lower.nma.random),
                    UB = exp(m1$upper.nma.random),
-                   pVal = exp(m1$pval.nma.random))
+                   pVal = m1$pval.nma.random)
+  t2.1 <- data.table(Endpoint = ep,
+                     Study = t2$Study,
+                     Treatment1 = t2$Treatment2,
+                     Treatment2 = t2$Treatment1,
+                     OR = 1/t2$OR,
+                     LB = 1/t2$UB,
+                     UB = 1/t2$LB,
+                     pVal = t2$pVal)
+  t2 <- rbindlist(list(t2,
+                       t2.1))
+  setorder(t2,
+           Treatment2)
+  
   print(datatable(t2,
                   caption = "",
                   rownames = FALSE,
@@ -334,16 +375,16 @@ foo4 <- function(ep, netplot = TRUE) {
                          digits = 3))
   
   t3 <- data.table(Endpoint = ep,
-                   Study = tmp3$Study,
-                   Treatment1 = tmp3$Arm2,
-                   Treatment2 = tmp3$Compare,
-                   N = tmp3$N.x + tmp3$N.y,
-                   OR = tmp3$OR,
-                   LB = exp(tmp3$logOR - 1.96*tmp3$seLogOR),
-                   UB = exp(tmp3$logOR + 1.96*tmp3$seLogOR))
+                   Study = tmp3.1$Study,
+                   Treatment1 = tmp3.1$Arm2,
+                   Treatment2 = tmp3.1$Compare,
+                   N = tmp3$N.x + tmp3$N.y, # NOTE: this are numbers before adding 0.5
+                   OR = tmp3.1$OR,
+                   LB = exp(tmp3.1$logOR - 1.96*tmp3.1$seLogOR),
+                   UB = exp(tmp3.1$logOR + 1.96*tmp3.1$seLogOR))
   
-  tmp <- t1[(Treatment1 %in% c("ASA only 6m",
-                               "ASA only",
+  tmp <- t1[(Treatment1 %in% c("ASA only",
+                               "ASA only 6m",
                                "P2Y12 only") & 
                Treatment2 == "DAPT"), ]
   t3 <- rbindlist(list(t3,
@@ -355,6 +396,7 @@ foo4 <- function(ep, netplot = TRUE) {
                                   OR = tmp$OR,
                                   LB = tmp$LB,
                                   UB = tmp$UB)))
+  
   setorder(t3,
            Treatment1)
   print(datatable(t3,
@@ -389,7 +431,6 @@ foo4 <- function(ep, netplot = TRUE) {
   print(p1)
 }
 ```
-
 
 # Load data
 ```{r data}
@@ -470,12 +511,12 @@ foo4("ST")
 # Maojor Bleeding
 ## 3 Groups
 ```{r mb_3}
-foo3("Maojor Bleeding")
+foo3("Major Bleeding")
 ```
 
 ## 4 Groups
 ```{r mb_4}
-foo4("Maojor Bleeding")
+foo4("Major Bleeding")
 ```
 
 # Major or Minor Bleeding
@@ -528,7 +569,8 @@ foo4("Composite of end point")
 3. [Safety and Efficacy of Antithrombotic Strategies in Patients With Atrial Fibrillation Undergoing Percutaneous Coronary Intervention
 A Network Meta-analysis of Randomized Controlled Trials](https://jamanetwork.com/journals/jamacardiology/article-abstract/2735647), R. D. Lopes et al, Jama Cardiology, June 19 2019  
 4. [Mortality in patients treated with extended duration dual antiplatelet therapy after drug-eluting stent implantation: a pairwise and Bayesian network meta-analysis of randomised trials](https://www.sciencedirect.com/science/article/pii/S014067361560263X?via%3Dihub), T. Palmerini, The Lancet, June 13 2015  
-
+5. [Meta-Analysis with R](https://www.springer.com/gp/book/9783319214153), Schwarzer, Guido, Carpenter, James R., Rücker, Gerta, Springer 2015  
+  
 # Abbreviations
 ```{r abbrev}
 abbrev <- data.table(rbind(c("ASA", "Acetylsalicylic acid (aspirin)."),

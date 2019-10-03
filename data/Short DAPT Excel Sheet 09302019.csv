@@ -1,4 +1,4 @@
-Study,Arm,Arm2,N,ACM,CV Death,MI,Stroke,ST,Maojor Bleeding,Major or Minor Bleeding,CV Death or MI,Primary end point,Composite of end point
+Study,Arm,Arm2,N,ACM,CV Death,MI,Stroke,ST,Major Bleeding,Major or Minor Bleeding,CV Death or MI,Primary end point,Composite of end point
 PCI Cure ,ASA only ,ASA only ,1345,,31,85,,,33,61,108,,108
 RESET,ASA only ,ASA only,1059,5,2,2,6,2,2,5,4,8,6
 OPTIMIZE,ASA only ,ASA only,1563,43,29,49,5,13,10,35,70,,82
