@@ -67,7 +67,7 @@ foo3 <- function(ep) {
                                  pageLength = nrow(dt1))) %>%
           formatCurrency(columns = 4:7, 
                          currency = "",
-                         digits = 0,
+                         digits = 1,
                          mark = ",") %>%
           formatCurrency(columns = 8:10, 
                          currency = "",
@@ -272,7 +272,7 @@ foo4 <- function(ep) {
                                  pageLength = nrow(dt1))) %>%
           formatCurrency(columns = 4:7, 
                          currency = "",
-                         digits = 0,
+                         digits = 1,
                          mark = ",") %>%
           formatCurrency(columns = 8:10, 
                          currency = "",
