@@ -17,6 +17,7 @@ require(netmeta)
 require(data.table)
 require(DT)
 require(ggplot2)
+require(scales)
 ```
 
 ```{r function_3groups}
@@ -217,6 +218,8 @@ foo3 <- function(ep) {
                linetype = 2) +
     geom_point(size = 3,
                shape = 23) +
+    scale_y_continuous(trans = log_trans(),
+                       breaks = c(0.1, 0.2, 0.5, 2^(0:5))) +
     theme(legend.position = "none")
   
   print(p1)
@@ -426,6 +429,8 @@ foo4 <- function(ep) {
                linetype = 2) +
     geom_point(size = 3,
                shape = 23) +
+    scale_y_continuous(trans = log_trans(),
+                       breaks = c(0.1, 0.2, 0.5, 2^(0:5))) +
     theme(legend.position = "none")
   
   print(p1)
@@ -434,7 +439,7 @@ foo4 <- function(ep) {
 
 # Load data
 ```{r data}
-dt1 <- fread("data/Short DAPT Excel Sheet 09302019.csv")
+dt1 <- fread("data/Short DAPT Excel Sheet 10032019.csv")
 
 # Remove PCI Cure
 dt1 <- dt1[Study != "PCI Cure", ]
@@ -455,112 +460,112 @@ Next, we separated each outcome, computed log odds ratios and their standard err
   
 # All-Cause Mortality (ACM)
 ## 3 Groups
-```{r acm_3}
+```{r acm_3, fig.width = 8, fig.height = 4}
 foo3("ACM")
 ```
 
 ## 4 Groups
-```{r acm_4}
+```{r acm_4, fig.width = 12, fig.height = 4}
 foo4("ACM")
 ```
 
 # CV Death
 ## 3 Groups
-```{r cvdeath_3}
+```{r cvdeath_3, fig.width = 8, fig.height = 4}
 foo3("CV Death")
 ```
 
 ## 4 Groups
-```{r cvdeath_4}
+```{r cvdeath_4, fig.width = 12, fig.height = 4}
 foo4("CV Death")
 ```
 
 # MI
 ## 3 Groups
-```{r mi_3}
+```{r mi_3, fig.width = 8, fig.height = 4}
 foo3("MI")
 ```
 
 ## 4 Groups
-```{r mi_4}
+```{r mi_4, fig.width = 12, fig.height = 4}
 foo4("MI")
 ```
 
 # Stroke
 ## 3 Groups
-```{r stroke_3}
+```{r stroke_3, fig.width = 8, fig.height = 4}
 foo3("Stroke")
 ```
 
 ## 4 Groups
-```{r stroke_4}
+```{r stroke_4, fig.width = 12, fig.height = 4}
 foo4("Stroke")
 ```
 
 # ST
 ## 3 Groups
-```{r st_3}
+```{r st_3, fig.width = 8, fig.height = 4}
 foo3("ST")
 ```
 
 ## 4 Groups
-```{r st_4}
+```{r st_4, fig.width = 12, fig.height = 4}
 foo4("ST")
 ```
 
 # Maojor Bleeding
 ## 3 Groups
-```{r mb_3}
+```{r mb_3, fig.width = 8, fig.height = 4}
 foo3("Major Bleeding")
 ```
 
 ## 4 Groups
-```{r mb_4}
+```{r mb_4, fig.width = 12, fig.height = 4}
 foo4("Major Bleeding")
 ```
 
 # Major or Minor Bleeding
 ## 3 Groups
-```{r mmb_3}
+```{r mmb_3, fig.width = 8, fig.height = 4}
 foo3("Major or Minor Bleeding")
 ```
 
 ## 4 Groups
-```{r mmb_4}
+```{r mmb_4, fig.width = 12, fig.height = 4}
 foo4("Major or Minor Bleeding")
 ```
 
 # CV Death or MI  
 ## 3 Groups
-```{r cvdmi_3}
+```{r cvdmi_3, fig.width = 8, fig.height = 4}
 foo3("CV Death or MI")
 ```
 
 ## 4 Groups
-```{r cvdmi_4}
+```{r cvdmi_4, fig.width = 12, fig.height = 4}
 foo4("CV Death or MI")
 ```
 
-# Primary end point
+# Death or MI
 ## 3 Groups
-```{r pep_3}
-foo3("Primary end point")
+```{r pep_3, fig.width = 8, fig.height = 4}
+foo3("Death or MI")
 ```
 
 ## 4 Groups
-```{r pep_4}
-foo4("Primary end point")
+```{r pep_4, fig.width = 12, fig.height = 4}
+foo4("Death or MI")
 ```
 
-# Composite of end point 
+# Composite End Point 
 ## 3 Groups
-```{r cep_3}
-foo3("Composite of end point")
+```{r cep_3, fig.width = 8, fig.height = 4}
+foo3("Composite End Point")
 ```
 
 ## 4 Groups
-```{r cep_4}
-foo4("Composite of end point")
+```{r cep_4, fig.width = 12, fig.height = 4}
+foo4("Composite End Point")
 ```
 
 # References
