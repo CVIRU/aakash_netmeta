@@ -1,3 +1,18 @@
+Original:
+
 Network meta-analysis is a method used to generate effect size estimates given study-level summary/contrast measures (sample means/sample mean differences, proportions/log odds ratios, etc.) along with the standard error of these summary/contrast measures (R?cker & Schwarzer, 2015). Using network meta-analysis, results can be generated for all possible treatment arm comparisons using only the study-level information from all available studies; specifically, treatment arm comparisons which were not included in any of the studies (e.g. ASA only vs. PSY12 only) can now be estimated by borrowing information from treatment arm comparisons that were included in at least one of the studies.
 
-Random effects network meta-analysis were used to to0 compare the effects of three types of treatments - aspirin only, P2Y12 only, and their compbination (DARP)
+Modified:
+
+Random effects network meta-analysis (NMA) were used to compare the effects of three treatments - aspirin only, P2Y12 only, and their compbination (DARP). NMA combins multiple pairwise meta-analyses and allows for direct and indirect comparisons. In this analysis, no single study had both, ASA and P2Y12, but NMA allowed to compare them indirectly, through a common DARP arm(Schwarzer 2015). Data was analyzed in October 2019 using 'R 3.6.1' software (R Core Team 2019) package 'netmeta' that implements NME using graph-theoretical methods that are equivalent to the frequentist methods (Rücker 2012). The estimates and the 95% confidence intervals were calculated and graphed as forest plots using 'netmeta' and 'gglot2' R packages (Wickham 2016). 
+
+References:
+1. Schwarzer, Guido, Carpenter, James R., Rücker, Gerta (2015). Meta-Analysis with R. Springer, Chapter 8: Network Meta-Analysis. https://www.springer.com/gp/book/9783319214153
+
+2. R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+3.Gerta Rücker, Ulrike Krahn, Jochem König, Orestis Efthimiou and Guido Schwarzer (2019). netmeta: Network Meta-Analysis using Frequentist Methods. R package version 1.1-0. https://CRAN.R-project.org/package=netmeta
+
+4. Rücker G (2012): Network meta-analysis, electrical networks and graph theory. Research Synthesis Methods, 3, 312–24
+
+5. H. Wickham (2016). ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York.
