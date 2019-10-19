@@ -12,11 +12,14 @@
 [References](#ref)  
 
 ## Daily Logs<a name="log"></a>
-### 09/29/2019
-* Created teh repository and fihished preliminary analysis
+### 10/18/2019
+* New version of the Rmd file (V3) with the following studies excluded: **DAPT STEMI**, **SMART DATE**, and **I Love it 2**. **PCI Cure** was removed from Version 2 on.
 
 ### 10/02/2019
 Meeting with Traymon, Javier and Dhammika 
+
+### 09/29/2019
+* Created teh repository and fihished preliminary analysis
   
 1. Typo in the data file fixed ("Maojor" -> "Major")  
 2. Typo in the code fixed (p-values were exponentiated)  
