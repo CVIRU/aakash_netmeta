@@ -1,5 +1,5 @@
 ---
-title: "Network Meta-Analysis, Version 4"
+title: "Network Meta-Analysis, Version 5"
 output:
   html_notebook:
     number_sections: yes
@@ -438,8 +438,10 @@ foo4 <- function(ep) {
 ```
 
 # Load data
+NOTE: larger number of events in GLOBAL LEADER compared to ***Short DAPT Excel Sheet 10242019.csv*** data file as it includes 2-year follow-up.  
+  
 ```{r data}
-dt1 <- fread("data/Short DAPT Excel Sheet 10242019.csv")
+dt1 <- fread("data/Short DAPT Excel Sheet 10252019.csv")
 
 # # Remove PCI Cure
 # dt1 <- dt1[!(Study %in% c("NIPPON",
