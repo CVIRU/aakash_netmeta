@@ -441,11 +441,11 @@ foo4 <- function(ep) {
 ```{r data}
 dt1 <- fread("data/Short DAPT Excel Sheet 11032019.csv")
 
-# Global Leaders 1-year follow-up
-dt1 <- dt1[Study != "GLOBAL LEADERS 2Y", ]
+# # Global Leaders 1-year follow-up
+# dt1 <- dt1[Study != "GLOBAL LEADERS 2Y", ]
 
-# # Global Leaders 2-year follow-up
-# dt1 <- dt1[Study != "GLOBAL LEADERS", ]
+# Global Leaders 2-year follow-up
+dt1 <- dt1[Study != "GLOBAL LEADERS", ]
 
 datatable(dt1,
           caption = "Table 1: number of patients",
