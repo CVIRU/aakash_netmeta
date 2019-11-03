@@ -13,6 +13,9 @@
 
 ## Daily Logs<a name="log"></a>
 ### 10/18/2019
+* Rmd Version 6: 2-year follow-up ITALIC, PRODIGY and GLOBAL LEADERS
+
+### 10/18/2019
 * New version of the Rmd file (V3) with the following studies excluded: **DAPT STEMI**, **SMART DATE**, and **I Love it 2**. **PCI Cure** was removed from Version 2 on.
 
 ### 10/02/2019
