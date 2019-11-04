@@ -237,7 +237,7 @@ foo4 <- function(ep) {
   tmp <- tmp[!is.na(Events),]
   tmp$Arm2 <- factor(tmp$Arm2,
                      levels = c("DAPT",
-                                "ASA only",
+                                "ASA only 3m",
                                 "ASA only 6m",
                                 "P2Y12 only"))
   
@@ -295,7 +295,7 @@ foo4 <- function(ep) {
                 treat2 = Compare,
                 studlab = Study,
                 reference.group = "DAPT",
-                seq = c("ASA only",
+                seq = c("ASA only 3m",
                         "ASA only 6m",
                         "P2Y12 only",
                         "DAPT"),
@@ -311,13 +311,13 @@ foo4 <- function(ep) {
   print(m1,
         reference.group = "DAPT")
   # print(m1,
-  #       reference.group = "ASA only")
+  #       reference.group = "ASA only 3m")
   
   forest(m1, 
          reference.group = "DAPT",
          col.square = "blue",
          sortvar = c("P2Y12 only",
-                     "ASA only",
+                     "ASA only 3m",
                      "ASA only 6m",
                      "DAPT"),
          smlab = "")
@@ -386,7 +386,7 @@ foo4 <- function(ep) {
                    LB = exp(tmp3.1$logOR - 1.96*tmp3.1$seLogOR),
                    UB = exp(tmp3.1$logOR + 1.96*tmp3.1$seLogOR))
   
-  tmp <- t1[(Treatment1 %in% c("ASA only",
+  tmp <- t1[(Treatment1 %in% c("ASA only 3m",
                                "ASA only 6m",
                                "P2Y12 only") & 
                Treatment2 == "DAPT"), ]
@@ -441,11 +441,11 @@ foo4 <- function(ep) {
 ```{r data}
 dt1 <- fread("data/Short DAPT Excel Sheet 11032019.csv")
 
-# # Global Leaders 1-year follow-up
-# dt1 <- dt1[Study != "GLOBAL LEADERS 2Y", ]
+# Global Leaders 1-year follow-up
+dt1 <- dt1[Study != "GLOBAL LEADERS 2Y", ]
 
-# Global Leaders 2-year follow-up
-dt1 <- dt1[Study != "GLOBAL LEADERS", ]
+# # Global Leaders 2-year follow-up
+# dt1 <- dt1[Study != "GLOBAL LEADERS", ]
 
 datatable(dt1,
           caption = "Table 1: number of patients",
@@ -547,6 +547,12 @@ foo3("Death or MI")
 ## 4 Groups
 ```{r pep_4, fig.width = 12, fig.height = 4}
 foo4("Death or MI")
+```
+
+# Sensitivity analysis: MI only, GLOBAL LEADERS 1-year follow-up
+```{r mi_3_no_smart_date, fig.width = 8, fig.height = 4}
+# dt1 <- dt1[Study != "SMART DATE", ]
+# foo3("MI")
 ```
 
 # References
