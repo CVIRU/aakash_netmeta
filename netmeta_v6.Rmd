@@ -441,11 +441,11 @@ foo4 <- function(ep) {
 ```{r data}
 dt1 <- fread("data/Short DAPT Excel Sheet 11032019.csv")
 
-# Global Leaders 1-year follow-up
-dt1 <- dt1[Study != "GLOBAL LEADERS 2Y", ]
+# # Global Leaders 1-year follow-up
+# dt1 <- dt1[Study != "GLOBAL LEADERS 2Y", ]
 
-# # Global Leaders 2-year follow-up
-# dt1 <- dt1[Study != "GLOBAL LEADERS", ]
+# Global Leaders 2-year follow-up
+dt1 <- dt1[Study != "GLOBAL LEADERS", ]
 
 datatable(dt1,
           caption = "Table 1: number of patients",
@@ -457,6 +457,67 @@ datatable(dt1,
                  currency = "",
                  digits = 0,
                  mark = ",")
+```
+
+```{r network_plot, fig.height = 5, fig.width = 6}
+# dt1
+# unique(dt1$Study)
+# length(unique(dt1$Study))
+# unique(dt1$Arm)
+# sum(dt1$N)
+# 
+# length(unique(dt1$Study[dt1$Arm == "ASA only"]))
+# length(unique(dt1$Study[dt1$Arm == "P2Y12 only"]))
+# length(unique(dt1$Study[dt1$Arm == "DAPT"]))
+
+tmp <- data.table(x = c(1, 2, 3),
+                  y = c(1, 2, 1),
+                  n = c(8, 10, 2))
+p1 <- ggplot() +
+  geom_segment(aes(x = c(1, 2, 1),
+                   xend = c(2, 3, 3),
+                   y = c(1, 2, 1),
+                   yend = c(2, 1, 1),
+                   size = c(4, 2, 1),
+                   linetype = c("dashed",
+                                "dashed",
+                                "solid")),
+               color = "black") +
+  geom_segment(aes(x = c(1, 2),
+                   xend = c(2, 3),
+                   y = c(1, 2),
+                   yend = c(2, 1),
+                   size = c(2.8, 1.2)),
+               color = "white") +
+  geom_point(data = tmp,
+             aes(x = x,
+                 y = y,
+                 size = n),
+             shape = 21,
+             fill = "white") +
+  geom_text(aes(x = c(1.2, 2, 2.8),
+                y = c(0.9, 2.1, 0.9),
+                label = c("S-DAPT/ASA",
+                          "L-DAPT",
+                          "S-DAPT/P2Y12"))) +
+  geom_text(aes(x = c(1.5, 2.5),
+                y = c(1.6, 1.6),
+                label = c("14 Studies",
+                          "4 Studies"),
+                angle = c(52, -52))) +
+  theme_void() +
+  theme(legend.position="none")
+
+tiff(filename = "tmp/network.tiff",
+     height = 5,
+     width = 6,
+     units = 'in',
+     res = 600,
+     compression = "lzw+p")
+print(p1)
+graphics.off()
+
+print(p1)
 ```
 
 Next, we separated each outcome, computed log odds ratios and their standard errors, and performed network meta-analysis.  

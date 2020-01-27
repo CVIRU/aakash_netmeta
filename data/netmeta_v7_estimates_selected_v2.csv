@@ -1,0 +1,17 @@
+Endpoint,Treatment1,Treatment2,Label,OR,LB,UB,pval
+All Cause Death,P2Y12 only,ASA only,S-DAPT/P2Y12 vs. S-DAPT/ASA,0.79,0.54,1.15,0.22
+All Cause Death,ASA only,DAPT,S-DAPT/ASA vs. L-DAPT,0.96,0.74,1.23,0.73
+All Cause Death,P2Y12 only,DAPT,S-DAPT/P2Y12 vs. L-DAPT,0.75,0.57,1.00,0.05
+CV Death,ASA only,DAPT,S-DAPT/ASA vs. L-DAPT,0.90,0.65,1.25,0.54
+MI,P2Y12 only,ASA only,S-DAPT/P2Y12 vs. S-DAPT/ASA,0.82,0.58,1.16,0.25
+MI,ASA only,DAPT,S-DAPT/ASA vs. L-DAPT,1.28,0.97,1.68,0.08
+MI,P2Y12 only,DAPT,S-DAPT/P2Y12 vs. L-DAPT,1.04,0.84,1.30,0.71
+ST,P2Y12 only,ASA only,S-DAPT/P2Y12 vs. S-DAPT/ASA,0.60,0.32,1.12,0.11
+ST,ASA only,DAPT,S-DAPT/ASA vs. L-DAPT,1.55,1.02,2.36,0.04
+ST,P2Y12 only,DAPT,S-DAPT/P2Y12 vs. L-DAPT,0.93,0.59,1.48,0.76
+Major Bleeding,P2Y12 only,ASA only,S-DAPT/P2Y12 vs. S-DAPT/ASA,0.55,0.28,1.07,0.08
+Major Bleeding,ASA only,DAPT,S-DAPT/ASA vs. L-DAPT,0.97,0.58,1.60,0.89
+Major Bleeding,P2Y12 only,DAPT,S-DAPT/P2Y12 vs. L-DAPT,0.53,0.34,0.82,0.01
+Major or Minor Bleeding,P2Y12 only,ASA only,S-DAPT/P2Y12 vs. S-DAPT/ASA,0.78,0.51,1.18,0.23
+Major or Minor Bleeding,ASA only,DAPT,S-DAPT/ASA vs. L-DAPT,0.78,0.58,1.07,0.12
+Major or Minor Bleeding,P2Y12 only,DAPT,S-DAPT/P2Y12 vs. L-DAPT,0.61,0.46,0.81,0.00
