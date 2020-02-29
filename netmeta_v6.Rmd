@@ -616,6 +616,71 @@ foo4("Death or MI")
 # foo3("MI")
 ```
 
+# Net Effect: MI - Major Bleeding
+```{r net_effect_mi_mbleed, fig.width = 7, fig.height = 5}
+dt1$net_mi_majbleed <- dt1$MI - dt1$`Major Bleeding`
+
+p1 <- ggplot(dt1,
+             aes(x = net_mi_majbleed,
+                 y = Study,
+                 fill = Study,
+                 size = log(N))) +
+  facet_wrap(~ Arm) +
+  geom_point(shape = 21) +
+  geom_vline(xintercept = 0,
+             linetype = "dashed") +
+  scale_x_continuous("Net Effect: MI - Major Bleeding") +
+  theme(legend.position = "none")
+print(p1)
+
+p2 <- ggplot(dt1,
+             aes(x = 100*net_mi_majbleed/N,
+                 y = Study,
+                 fill = Study,
+                 size = log(N))) +
+  facet_wrap(~ Arm) +
+  geom_point(shape = 21) +
+  geom_vline(xintercept = 0,
+             linetype = "dashed") +
+  scale_x_continuous("Net Effect: %MI - %Major Bleeding") +
+  theme(legend.position = "none")
+print(p2)
+
+dt1[, wgt := N/sum(N),
+    by = "Arm"]
+
+dt1[, mu := mean(net_mi_majbleed,
+                 na.rm = TRUE),
+    by = "Arm"]
+dt1[, wgt.mu := sum(wgt*net_mi_majbleed,
+                     na.rm = TRUE),
+    by = "Arm"]
+
+dt1[, mu.pct := mean(100*net_mi_majbleed/N,
+                     na.rm = TRUE),
+    by = "Arm"]
+dt1[, wgt.mu.pct := sum(100*wgt*net_mi_majbleed/N,
+                         na.rm = TRUE),
+    by = "Arm"]
+
+
+t1 <- unique(dt1[, c("Arm",
+                     "mu",
+                     "wgt.mu",
+                     "mu.pct",
+                     "wgt.mu.pct")])
+colnames(t1) <- c("Arm",
+                  "Mean Difference",
+                  "Mean Weighted Difference",
+                  "Mean % Difference",
+                  "Mean Weighted % Difference")
+datatable(t1) %>%
+  formatCurrency(columns = 2:5,
+                 currency = "",
+                 digits = 3)
+```
+
+
 # References
 1. [Doing Meta-Analysis in R Meta-Analysis, A Hands-On Guide](https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/frequentist-network-meta-analysis.html), Chapter 11.1 Frequentist Network, M. Harrer et al.  
 2. [An Introduction to Categorical data Analysis](https://mregresion.files.wordpress.com/2012/08/agresti-introduction-to-categorical-data.pdf), Alan Agresti, 2007, Page 30.  
