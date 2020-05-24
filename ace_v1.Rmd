@@ -1,0 +1,272 @@
+---
+title: "COVID-19 ACE"
+output:
+  html_notebook:
+    highlight: tango
+    number_sections: yes
+    theme: united
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+---
+Last Run: `r date()`  
+
+```{r setup}
+require(data.table)
+require(DT)
+require(ggplot2)
+require(table1)
+```
+
+# Data
+```{r data}
+dt1 <- fread("docs/ace/ACE (2-20-20)edit HH.csv")
+
+# Outcomes
+dt1$death <- dt1$`Mortality(1=disharged, 2=in hospital, 3=dead)` == 1
+dt1$vent <- dt1$`Ventilated (0/1)` ==1
+dt1$severe_ards <- dt1$`Severe ARDS on high flow oxygen or BiPAP, non rebreather (0/1)` == 1
+
+# Demographics
+dt1$age <- dt1$AGE
+dt1$age_grp <- "<65"
+dt1$age_grp[dt1$AGE >= 65] <- "65 to 74"
+dt1$age_grp[dt1$AGE >= 75] <- "75 to 84"
+dt1$age_grp[dt1$AGE >= 85] <- ">= 85"
+dt1$age_grp <- factor(dt1$age_grp,
+                      levels = c("<65",
+                                 "65 to 74",
+                                 "75 to 84",
+                                 ">= 85"))
+
+dt1$sex <- factor(dt1$pt_gender)
+dt1$race <- factor(dt1$`pt_race (w/b/o)`) # NOTE: most patients are black
+
+# Main effect
+dt1$ace_arbs_hosp <- dt1$`ACE/ARBS (0/1/2)` %in% c(1, 2)
+dt1$ace_arbs_home <- dt1$`ACE/ARBS home (0/1/2)` %in% c(1, 2)
+dt1$ace_all <- dt1$ace_arbs_home | dt1$ace_arbs_hosp
+
+# Comorbidities
+dt1$hyper <- dt1$`HTN (0/1)` == 1
+dt1$diab <- dt1$`DM (0/1)` == 1
+dt1$hf <- dt1$`HF on admission (0/1)` == 1
+dt1$cad <- dt1$`CAD (0/1)` == 1
+dt1$ckd <- dt1$`CKD (0/1)` == 1
+dt1$astma_copd <- dt1$`Asthma (0/1)` == 1 | dt1$`COPD (0/1)` == 1
+dt1$smoke <- dt1$`Smoker (0/1)` == 1
+
+dt1$bmi <- dt1$`BMI wt/((ht/100)^2)`
+dt1$bmi_cat <- "under"
+dt1$bmi_cat[dt1$bmi > 18.5] <- "norm"
+dt1$bmi_cat[dt1$bmi > 25] <- "over"
+dt1$bmi_cat[dt1$bmi > 30] <- "obese"
+dt1$bmi_cat[dt1$bmi > 35] <- "m_obese"
+dt1$bmi_cat <- factor(dt1$bmi_cat,
+                      levels = c("under",
+                                 "norm",
+                                 "over",
+                                 "obese",
+                                 "m_obese"))
+dt1$bmi_cat[is.na(dt1$bmi)] <- NA
+
+# Labs
+dt1$creat <- dt1$`Creatinine at DOA mg/dl`
+dt1$creat[dt1$creat == 999] <- NA
+
+dt1$potas <- dt1$`potassium DOA`
+dt1$potas[dt1$potas == 999] <- NA
+
+dt1$trop_doa <- dt1$`Troponin (DOA) ng/ml`
+dt1$trop_doa[substr(dt1$trop_doa, 1, 1) == "<" ] <- 0
+dt1$trop_doa <- as.numeric(dt1$trop_doa)
+dt1$trop_doa[dt1$trop_doa == 999] <- NA
+
+dt1$trop_peak <- dt1$`Troponin (peak) ng/ml`
+dt1$trop_peak[substr(dt1$trop_peak, 1, 1) == "<" ] <- 0
+dt1$trop_peak <- as.numeric(dt1$trop_peak)
+dt1$trop_peak[dt1$trop_peak == 999] <- NA
+
+dt1$d_dimer <- dt1$`D-Dimer - DOA mg/dl`
+dt1$d_dimer[dt1$d_dimer == 999] <- NA
+
+dt1$ferr <- dt1$`Ferritin - Max ng/dl`
+dt1$ferr[dt1$ferr == 999] <- NA
+
+dt1$crp <- dt1$`C- reactive protein (DOA)`
+dt1$crp[dt1$crp == 999] <- NA
+
+dt1$procalc <- dt1$`Procalcitonin ng/dl (DOA)`
+dt1$procalc[dt1$procalc == 999] <- NA
+
+dt1 <- dt1[, death:procalc]
+summary(dt1)
+```
+
+NOTE: 2 patients with a missing outcome (severe_ards) were excluded:
+```{r exclude_missing_outcomes}
+dt1 <- dt1[!is.na(dt1$severe_ards), ]
+summary(dt1)
+gc()
+```
+
+# Table1: risk factors by ace_arbs_hosp, medians and means, with tests
+```{r table1}
+# plot(dt1[, creat:procalc])
+# 
+# table1(~ death + 
+#          vent +
+#          severe_ards  +
+#          age +
+#          age_grp +
+#          ace_arbs_home +
+#          ace_all +
+#          hyper +
+#          diab +
+#          hf +
+#          cad +
+#          ckd +
+#          astma_copd +
+#          smoke +
+#          bmi +
+#          bmi_cat  +
+#          creat +
+#          potas +
+#          trop_doa +
+#          trop_peak +
+#          d_dimer +
+#          ferr +
+#          crp +
+#          procalc | ace_arbs_hosp,
+#        data = dt1)
+```
+
+```{r table1_pval}
+# Source: https://cran.r-project.org/web/packages/table1/vignettes/table1-examples.html
+dt1$ace_arbs_hosp_1 <- factor(dt1$ace_arbs_hosp,
+                            levels = c("FALSE",
+                                       "TRUE",
+                                       "NA"),
+                            labels = c("No ACE",
+                                       "ACE",
+                                       "p-Value"))
+
+rndr <- function(x, name, ...) {
+  if (length(x) == 0) {
+    y <- dt1[[name]]
+    s <- rep("", length(render.default(x = y, 
+                                       name = name, ...)))
+    if (is.numeric(y)) {
+      p <- t.test(y ~ dt1$ace_arbs_hosp_1)$p.value
+    } else {
+      p <- chisq.test(table(y, 
+                            droplevels(dt1$ace_arbs_hosp_1)))$p.value
+    }
+    s[2] <- sub("<", "&lt;", 
+                format.pval(p, 
+                            digits = 3, 
+                            eps = 0.001))
+    s
+  } else {
+    render.default(x = x,
+                   name = name, ...)
+  }
+}
+
+rndr.strat <- function(label, n, ...) {
+  ifelse(n == 0, 
+         label, 
+         render.strat.default(label, 
+                              n, ...))
+}
+
+
+table1(~ . | ace_arbs_hosp_1,
+       caption = "Table 1: by ACE in hospital",
+       data = dt1,
+       droplevels = FALSE,
+       render = rndr,
+       render.strat = rndr.strat, 
+       overall = FALSE)
+```
+
+```{r uni_ace_arbs_home}
+addmargins(table(death = dt1$death,
+                 ace = dt1$ace_arbs_home))
+
+m1 <- glm(death ~ ace_arbs_home,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+exp(s1$coefficients[, 1])
+exp(confint(m1))
+```
+
+```{r uni_ace_arbs_hosp}
+addmargins(table(death = dt1$death,
+      ace = dt1$ace_arbs_hosp))
+
+m1 <- glm(death ~ ace_arbs_hosp,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+exp(s1$coefficients[, 1])
+exp(confint(m1))
+```
+
+```{r uni_ace_all}
+dt1$ace <- dt1$ace_arbs_hosp | dt1$ace_arbs_home
+addmargins(table(death = dt1$death,
+      ace = dt1$ace))
+
+m1 <- glm(death ~ ace,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+exp(s1$coefficients[, 1])
+exp(confint(m1))
+```
+
+```{r multi_ace_all}
+m1 <- glm(death ~ ace + age + sex + hyper + diab + hf + cad + ckd + bmi,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+exp(s1$coefficients[, 1])
+exp(confint(m1))
+```
+
+```{r uni_age}
+m1 <- glm(death ~age,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+exp(s1$coefficients[, 1])
+exp(confint(m1))
+
+table(dt1$age,
+      dt1$death)
+
+hist(dt1$bmi, 100)
+
+plot(dt1$death ~ dt1$bmi)
+
+addmargins(table(bmi_cat = dt1$bmi_cat,
+                 death = dt1$death))
+```
+
+```{r multi_ace_arbs_hosp}
+m1 <- glm(death ~ ace_arbs_hosp + age + sex + hyper + diab + hf + cad + ckd + bmi,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+exp(s1$coefficients[, 1])
+exp(confint(m1))
+```
+
