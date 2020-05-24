@@ -2,6 +2,8 @@
 # PI: Aakash Garg
 # Author: Davit Sargsyan
 # Date: 01/22/2020
+require(data.table)
+require(ggplot2)
 
 # 1. Network plot
 tmp <- data.table(x = c(1, 2, 3),
