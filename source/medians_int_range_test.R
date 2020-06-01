@@ -58,6 +58,14 @@
 require(metamedian)
 require(data.table)
 
+# Meaning of the parameters:
+# q1..: first quartile
+# med..: median
+# q3..: 3rd quartile
+# n..: number of pateints
+# ..g1: Aakash's study
+# ..g2: historic data
+
 # angio
 qe.angio <- qe.study.level(q1.g1 = 13.2,
                            med.g1 =  17.8,
