@@ -1,5 +1,5 @@
 ---
-title: "COVID-19 ACE"
+title: "COVID-19 ACEI/ARB Effect on In-Hospital Mortality, Needintg a Ventilator, or Having Severe ARDS"
 output:
   html_notebook:
     highlight: tango
@@ -16,6 +16,26 @@ require(data.table)
 require(DT)
 require(ggplot2)
 require(table1)
+
+f_t1 <- function(s1) {
+  out <- data.table(Covariate = rownames(s1$coefficients)[-1],
+                    OR = exp(s1$coefficients[-1, 1]),
+                    `95% C.I.L.B.` = exp(confint(m1)[-1, 1]),
+                    `95% C.I.U.B.` = exp(confint(m1)[-1, 2]),
+                    `p-Value` = ifelse(s1$coefficients[-1, 4] >= 0.001,
+                                       round(s1$coefficients[-1, 4], 3),
+                                       "<0.001"),
+                    Significance = ifelse(s1$coefficients[-1, 4] <= 0.05,
+                                          ifelse(s1$coefficients[-1, 4] <= 0.01,
+                                                 "**",
+                                                 "*"), ""))
+  t1 <- datatable(out) %>%
+    formatCurrency(columns = 2:4, 
+                   currency = "",
+                   digits = 3,
+                   mark = ",")
+  return(t1)
+}
 ```
 
 # Data
@@ -29,12 +49,14 @@ dt1$severe_ards <- dt1$`Severe ARDS on high flow oxygen or BiPAP, non rebreather
 
 # Demographics
 dt1$age <- dt1$AGE
-dt1$age_grp <- "<65"
+dt1$age_grp <- "< 50"
+dt1$age_grp[dt1$AGE >= 50] <- "50 to 64"
 dt1$age_grp[dt1$AGE >= 65] <- "65 to 74"
 dt1$age_grp[dt1$AGE >= 75] <- "75 to 84"
 dt1$age_grp[dt1$AGE >= 85] <- ">= 85"
 dt1$age_grp <- factor(dt1$age_grp,
-                      levels = c("<65",
+                      levels = c("< 50",
+                                 "50 to 64",
                                  "65 to 74",
                                  "75 to 84",
                                  ">= 85"))
@@ -141,7 +163,7 @@ gc()
 #        data = dt1)
 ```
 
-```{r table1_pval}
+```{r table1_pval_funct}
 # Source: https://cran.r-project.org/web/packages/table1/vignettes/table1-examples.html
 dt1$ace_arbs_hosp_1 <- factor(dt1$ace_arbs_hosp,
                             levels = c("FALSE",
@@ -151,7 +173,7 @@ dt1$ace_arbs_hosp_1 <- factor(dt1$ace_arbs_hosp,
                                        "ACE",
                                        "p-Value"))
 
-rndr <- function(x, name, ...) {
+rndr.ttest <- function(x, name, ...) {
   if (length(x) == 0) {
     y <- dt1[[name]]
     s <- rep("", length(render.default(x = y, 
@@ -173,37 +195,73 @@ rndr <- function(x, name, ...) {
   }
 }
 
+rndr.wilcox <- function(x, name, ...) {
+  if (length(x) == 0) {
+    y <- dt1[[name]]
+    s <- rep("", length(render.default(x = y, 
+                                       name = name, ...)))
+    if (is.numeric(y)) {
+      p <- wilcox.test(y ~ dt1$ace_arbs_hosp_1)$p.value
+    } else {
+      p <- chisq.test(table(y, 
+                            droplevels(dt1$ace_arbs_hosp_1)))$p.value
+    }
+    s[2] <- sub("<", "&lt;", 
+                format.pval(p, 
+                            digits = 3, 
+                            eps = 0.001))
+    s
+  } else {
+    render.default(x = x,
+                   name = name, ...)
+  }
+}
+
 rndr.strat <- function(label, n, ...) {
   ifelse(n == 0, 
          label, 
          render.strat.default(label, 
                               n, ...))
 }
+```
 
-
+# t-Test for continuous variables/Chi square for categorical
+```{r table1_pval_ttest}
 table1(~ . | ace_arbs_hosp_1,
-       caption = "Table 1: by ACE in hospital",
+       caption = "Table 1: by ACE in hospital, t-Test/Chi^2",
        data = dt1,
        droplevels = FALSE,
-       render = rndr,
+       render = rndr.ttest,
        render.strat = rndr.strat, 
        overall = FALSE)
 ```
 
-```{r uni_ace_arbs_home}
-addmargins(table(death = dt1$death,
-                 ace = dt1$ace_arbs_home))
-
-m1 <- glm(death ~ ace_arbs_home,
-          data = dt1,
-          family = "binomial")
-s1 <- summary(m1)
-s1
-exp(s1$coefficients[, 1])
-exp(confint(m1))
+# Wilcoxon test for continuous variables/Chi square for categorical
+```{r table1_pval_wilcox}
+table1(~ . | ace_arbs_hosp_1,
+       caption = "Table 1: by ACE in hospital, t-Test/Chi^2",
+       data = dt1,
+       droplevels = FALSE,
+       render = rndr.wilcox,
+       render.strat = rndr.strat, 
+       test = "wilcoxon",
+       overall = FALSE)
 ```
 
-```{r uni_ace_arbs_hosp}
+# In-hospital mortality
+```{r uni_death}
+p1 <- ggplot(dt1,
+             aes(x = age,
+                 y = as.numeric(death))) +
+  geom_point(shape = 21,
+             size = 3) +
+  geom_smooth(method = "loess",
+              span = 0.5,
+              se = FALSE) +
+  scale_y_continuous("Probability of death",
+                     limits = c(0, 1))
+print(p1)  
+
 addmargins(table(death = dt1$death,
       ace = dt1$ace_arbs_hosp))
 
@@ -212,61 +270,241 @@ m1 <- glm(death ~ ace_arbs_hosp,
           family = "binomial")
 s1 <- summary(m1)
 s1
-exp(s1$coefficients[, 1])
-exp(confint(m1))
+f_t1(s1)
+```
+
+```{r multi_death_covar}
+m1 <- glm(death ~ ace_arbs_hosp + 
+            age_grp + 
+            sex + 
+            hyper + 
+            diab +
+            hf + 
+            cad + 
+            ckd + 
+            smoke,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+```{r multi_death_covar_hyper_only}
+m1 <- glm(death ~ ace_arbs_hosp + 
+            age_grp + 
+            sex + 
+            diab +
+            hf + 
+            cad + 
+            ckd + 
+            smoke,
+          data = droplevels(dt1[hyper == TRUE]),
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+# Ventilator
+```{r uni_vent}
+p1 <- ggplot(dt1,
+             aes(x = age,
+                 y = as.numeric(vent))) +
+  geom_point(shape = 21,
+             size = 3) +
+  geom_smooth(method = "loess",
+              span = 0.5,
+              se = FALSE) +
+  scale_y_continuous("Probability of death",
+                     limits = c(0, 1))
+print(p1)  
+
+addmargins(table(vent = dt1$vent,
+      ace = dt1$ace_arbs_hosp))
+
+m1 <- glm(vent ~ ace_arbs_hosp,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+```{r multi_vent}
+m1 <- glm(vent ~ ace_arbs_hosp + 
+            age_grp + 
+            sex + 
+            hyper + 
+            diab +
+            hf + 
+            cad + 
+            ckd + 
+            smoke,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+```{r multi_vent_hyper_only}
+m1 <- glm(death ~ ace_arbs_hosp + 
+            age_grp + 
+            sex + 
+            diab +
+            hf + 
+            cad + 
+            ckd + 
+            smoke,
+          data = droplevels(dt1[hyper == TRUE]),
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+# Severe ARDS
+```{r uni_sards}
+p1 <- ggplot(dt1,
+             aes(x = age,
+                 y = as.numeric(severe_ards))) +
+  geom_point(shape = 21,
+             size = 3) +
+  geom_smooth(method = "loess",
+              span = 0.5,
+              se = FALSE) +
+  scale_y_continuous("Probability of death",
+                     limits = c(0, 1))
+print(p1)  
+
+addmargins(table(severe_ards = dt1$severe_ards,
+      ace = dt1$ace_arbs_hosp))
+
+m1 <- glm(severe_ards ~ ace_arbs_hosp,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+```{r multi_sards}
+m1 <- glm(severe_ards ~ ace_arbs_hosp + 
+            age_grp + 
+            sex + 
+            hyper + 
+            diab +
+            hf + 
+            cad + 
+            ckd + 
+            smoke,
+          data = dt1,
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+```{r multi_sards_hyper_only}
+m1 <- glm(severe_ards ~ ace_arbs_hosp + 
+            age_grp + 
+            sex + 
+            diab +
+            hf + 
+            cad + 
+            ckd + 
+            smoke,
+          data = droplevels(dt1[hyper == TRUE]),
+          family = "binomial")
+s1 <- summary(m1)
+s1
+f_t1(s1)
+```
+
+# AD HOC
+```{r}
+dt1$id <- 1:nrow(dt1)
+p1 <- ggplot(dt1,
+             aes(x = ace_arbs_hosp,
+                 y = trop_doa,
+                 group = id)) +
+  geom_point(shape = 21,
+             size = 3,
+             position = position_dodge(0.3)) 
+print(p1)
+
+p2 <- ggplot(dt1,
+             aes(x = ace_arbs_hosp,
+                 y = trop_peak,
+                 group = id)) +
+  geom_point(shape = 21,
+             size = 3,
+             position = position_dodge(0.3)) 
+print(p2)
+  
+```
+
+
+# Not Used
+```{r uni_ace_arbs_home}
+# addmargins(table(death = dt1$death,
+#                  ace = dt1$ace_arbs_home))
+# 
+# m1 <- glm(death ~ ace_arbs_home,
+#           data = dt1,
+#           family = "binomial")
+# s1 <- summary(m1)
+# s1
+# exp(s1$coefficients[, 1])
+# exp(confint(m1))
 ```
 
 ```{r uni_ace_all}
-dt1$ace <- dt1$ace_arbs_hosp | dt1$ace_arbs_home
-addmargins(table(death = dt1$death,
-      ace = dt1$ace))
-
-m1 <- glm(death ~ ace,
-          data = dt1,
-          family = "binomial")
-s1 <- summary(m1)
-s1
-exp(s1$coefficients[, 1])
-exp(confint(m1))
+# dt1$ace <- dt1$ace_arbs_hosp | dt1$ace_arbs_home
+# addmargins(table(death = dt1$death,
+#       ace = dt1$ace))
+# 
+# m1 <- glm(death ~ ace,
+#           data = dt1,
+#           family = "binomial")
+# s1 <- summary(m1)
+# s1
+# exp(s1$coefficients[, 1])
+# exp(confint(m1))
 ```
 
 ```{r multi_ace_all}
-m1 <- glm(death ~ ace + age + sex + hyper + diab + hf + cad + ckd + bmi,
-          data = dt1,
-          family = "binomial")
-s1 <- summary(m1)
-s1
-exp(s1$coefficients[, 1])
-exp(confint(m1))
+# m1 <- glm(death ~ ace + age + sex + hyper + diab + hf + cad + ckd + bmi,
+#           data = dt1,
+#           family = "binomial")
+# s1 <- summary(m1)
+# s1
+# exp(s1$coefficients[, 1])
+# exp(confint(m1))
 ```
 
 ```{r uni_age}
-m1 <- glm(death ~age,
-          data = dt1,
-          family = "binomial")
-s1 <- summary(m1)
-s1
-exp(s1$coefficients[, 1])
-exp(confint(m1))
-
-table(dt1$age,
-      dt1$death)
-
-hist(dt1$bmi, 100)
-
-plot(dt1$death ~ dt1$bmi)
-
-addmargins(table(bmi_cat = dt1$bmi_cat,
-                 death = dt1$death))
+# m1 <- glm(death ~age,
+#           data = dt1,
+#           family = "binomial")
+# s1 <- summary(m1)
+# s1
+# exp(s1$coefficients[, 1])
+# exp(confint(m1))
+# 
+# table(dt1$age,
+#       dt1$death)
+# 
+# hist(dt1$bmi, 100)
+# 
+# plot(dt1$death ~ dt1$bmi)
+# 
+# addmargins(table(bmi_cat = dt1$bmi_cat,
+#                  death = dt1$death))
 ```
 
-```{r multi_ace_arbs_hosp}
-m1 <- glm(death ~ ace_arbs_hosp + age + sex + hyper + diab + hf + cad + ckd + bmi,
-          data = dt1,
-          family = "binomial")
-s1 <- summary(m1)
-s1
-exp(s1$coefficients[, 1])
-exp(confint(m1))
+```{r session}
+sessionInfo()
 ```
 
